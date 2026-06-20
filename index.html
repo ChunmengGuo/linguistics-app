@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="语言学背诵">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>语言学背诵助手</title>
+<style>
+/* ========== CSS Variables & Reset ========== */
+:root {
+  --primary: #4F46E5;
+  --primary-light: #EEF2FF;
+  --primary-dark: #4338CA;
+  --success: #10B981;
+  --success-light: #D1FAE5;
+  --warning: #F59E0B;
+  --warning-light: #FEF3C7;
+  --danger: #EF4444;
+  --danger-light: #FEE2E2;
+  --text: #1F2937;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --bg: #F5F5F7;
+  --card: #FFFFFF;
+  --border: #E5E7EB;
+  --radius: 16px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --nav-height: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 16px);
+}
+
+/* ========== Bottom Navigation ========== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+  padding-bottom: var(--safe-bottom);
+  height: calc(var(--nav-height) + var(--safe-bottom));
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-item.active { color: var(--primary); }
+.nav-item .icon { font-size: 24px; }
+.nav-item .label { font-size: 11px; font-weight: 500; }
+.nav-badge {
+  position: absolute;
+  top: 4px;
+  margin-left: 22px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  min-width: 18px; height: 18px;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600;
+}
+
+/* ========== Pages ========== */
+.page { display: none; animation: fadeIn 0.25s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ========== Cards ========== */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin: 12px 16px;
+  box-shadow: var(--shadow);
+}
+
+/* ========== Buttons ========== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; border-radius: 12px; padding: 12px 24px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--primary); color: #fff; width: 100%; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-warning { background: var(--warning); color: #fff; }
+.btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+.btn-ghost { background: var(--primary-light); color: var(--primary); }
+.btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 8px; }
+.btn-lg { padding: 16px 32px; font-size: 17px; border-radius: 16px; }
+
+/* ========== Tags ========== */
+.tag {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+}
+.tag-primary { background: var(--primary-light); color: var(--primary); }
+.tag-success { background: var(--success-light); color: #065F46; }
+.tag-warning { background: var(--warning-light); color: #92400E; }
+.tag-danger { background: var(--danger-light); color: #991B1B; }
+.chapter-tag {
+  display: inline-block; padding: 4px 12px; border-radius: 6px;
+  font-size: 12px; font-weight: 700; margin-right: 8px;
+}
+.ch-1 { background: #E0E7FF; color: #4338CA; }
+.ch-2 { background: #D1FAE5; color: #065F46; }
+.ch-3 { background: #FEF3C7; color: #92400E; }
+
+/* ========== Progress Bar ========== */
+.progress-bar { height: 8px; background: #E5E7EB; border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.4s ease; }
+
+/* ========== Page 1: Knowledge List ========== */
+.stats-bar {
+  display: flex; align-items: center; justify-content: space-around;
+  background: linear-gradient(135deg, #4F46E5, #6366F1);
+  margin: 16px; padding: 20px 16px; border-radius: var(--radius);
+  color: #fff;
+}
+.stat-item { text-align: center; }
+.stat-num { font-size: 32px; font-weight: 800; display: block; }
+.stat-label { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+.stat-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.2); }
+
+.chapter-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 16px;
+}
+.chapter-title-row { display: flex; align-items: center; gap: 12px; }
+.chapter-badge {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 800;
+}
+.chapter-title { font-size: 20px; font-weight: 700; display: block; }
+.chapter-subtitle { font-size: 13px; color: var(--text-secondary); }
+
+.filter-row {
+  display: flex; gap: 8px; padding: 4px 16px 12px; overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.filter-btn {
+  flex-shrink: 0; padding: 8px 18px; border-radius: 20px;
+  font-size: 13px; font-weight: 500;
+  background: var(--card); color: var(--text-secondary);
+  border: 1.5px solid var(--border); cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.kp-card {
+  display: flex; gap: 14px; background: var(--card);
+  border-radius: var(--radius); padding: 16px;
+  margin: 0 16px 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  cursor: pointer; transition: transform 0.15s;
+}
+.kp-card:active { transform: scale(0.985); }
+.kp-left { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 48px; }
+.kp-id { font-size: 12px; font-weight: 600; color: var(--text-muted); background: #F9FAFB; padding: 4px 10px; border-radius: 6px; }
+.kp-dot { width: 10px; height: 10px; border-radius: 50%; }
+.kp-dot.gray { background: #D1D5DB; }
+.kp-dot.orange { background: var(--warning); }
+.kp-dot.green { background: var(--success); }
+.kp-right { flex: 1; min-width: 0; }
+.kp-section { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+.kp-title { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+.kp-title-cn { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+.kp-term-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.kp-status-text { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+
+/* ========== Page 2: Detail ========== */
+.detail-header {
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  margin: 12px 16px; padding: 24px; border-radius: var(--radius);
+  color: #fff;
+}
+.detail-header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.detail-section { font-size: 12px; opacity: 0.8; display: block; margin-bottom: 6px; }
+.detail-title { font-size: 24px; font-weight: 700; display: block; margin-bottom: 2px; }
+.detail-title-cn { font-size: 15px; opacity: 0.85; display: block; }
+.content-card { background: var(--card); margin: 12px 16px; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); }
+.content-card h3 { font-size: 16px; margin-bottom: 12px; }
+.content-body { font-size: 14px; line-height: 1.9; white-space: pre-line; color: var(--text); }
+.terms-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.tip-card {
+  background: #FFFBEB; margin: 12px 16px; padding: 16px; border-radius: var(--radius);
+  border-left: 4px solid var(--warning);
+}
+.tip-card h3 { font-size: 15px; margin-bottom: 6px; }
+.tip-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+.history-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.history-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-secondary); }
+.history-dot { width: 8px; height: 8px; border-radius: 50%; }
+.history-dot.blue { background: #3B82F6; }
+.history-dot.green { background: #10B981; }
+.history-dot.orange { background: #F59E0B; }
+.bottom-actions {
+  position: sticky; bottom: 0; background: var(--card);
+  padding: 16px; margin: 16px; border-radius: var(--radius);
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.06); display: flex; gap: 10px;
+}
+.bottom-actions .btn { flex: 1; }
+
+/* ========== Page 3: Review ========== */
+.review-header {
+  background: linear-gradient(135deg, #4F46E5, #6366F1);
+  margin: 16px; padding: 24px; border-radius: var(--radius); color: #fff;
+}
+.review-date { font-size: 28px; font-weight: 800; display: block; }
+.review-date-label { font-size: 13px; opacity: 0.8; display: block; margin-top: 2px; }
+.review-stats-row { display: flex; gap: 32px; margin-top: 16px; }
+.review-stat-num { font-size: 36px; font-weight: 800; display: block; }
+.review-stat-label { font-size: 12px; opacity: 0.7; }
+
+.curve-card { background: var(--card); margin: 0 16px 12px; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); }
+.curve-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+.curve-stages { display: flex; justify-content: space-between; position: relative; padding: 0 8px; }
+.curve-line {
+  position: absolute; top: 24px; left: 30px; right: 30px; height: 3px;
+  background: #E5E7EB; z-index: 0;
+}
+.stage-dot-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; z-index: 1; }
+.stage-dot {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: #F3F4F6; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; border: 3px solid #E5E7EB;
+  transition: all 0.3s;
+}
+.stage-dot.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.stage-dot.done { background: #D1FAE5; color: #065F46; border-color: var(--success); }
+.stage-label { font-size: 11px; color: var(--text-muted); }
+.stage-label.active { color: var(--primary); font-weight: 600; }
+.stage-label.done { color: var(--success); }
+.curve-desc { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 12px; padding-top: 10px; border-top: 1px solid #F3F4F6; }
+
+.review-card {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--card); border-radius: var(--radius);
+  padding: 16px; margin: 0 16px 10px; box-shadow: var(--shadow);
+}
+.review-s-badge {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.review-s-badge.s1 { background: #6366F1; } .review-s-badge.s2 { background: #8B5CF6; }
+.review-s-badge.s3 { background: #EC4899; } .review-s-badge.s4 { background: #F59E0B; }
+.review-s-badge.s5 { background: #EF4444; } .review-s-badge.s6 { background: #10B981; }
+.review-card-mid { flex: 1; min-width: 0; cursor: pointer; }
+.review-card-title { font-size: 15px; font-weight: 600; display: block; }
+.review-card-cn { font-size: 13px; color: var(--text-secondary); display: block; }
+.review-card-meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.review-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.review-btn {
+  width: 48px; height: 48px; border-radius: 50%; border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; cursor: pointer; transition: transform 0.15s;
+}
+.review-btn:active { transform: scale(0.9); }
+.review-btn.pass { background: #D1FAE5; color: #065F46; }
+.review-btn.retry { background: #FEE2E2; color: #991B1B; }
+
+/* ========== Page 4: Profile ========== */
+.profile-header {
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  padding: 40px 24px 32px; display: flex; flex-direction: column;
+  align-items: center; color: #fff;
+}
+.profile-avatar { font-size: 56px; margin-bottom: 8px; }
+.profile-name { font-size: 20px; font-weight: 700; }
+.profile-sub { font-size: 13px; opacity: 0.8; }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; margin-top: -12px; position: relative; z-index: 1; }
+.stats-card { background: var(--card); border-radius: var(--radius); padding: 20px; text-align: center; box-shadow: var(--shadow); }
+.stats-card.streak { background: linear-gradient(135deg, #FEF3C7, #FDE68A); }
+.stats-card .num { font-size: 36px; font-weight: 800; color: var(--primary); display: block; }
+.stats-card.streak .num { color: #92400E; }
+.stats-card .lbl { font-size: 12px; color: var(--text-secondary); margin-top: 2px; display: block; }
+
+.section { margin: 0 16px 12px; }
+.section h3 { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+.stage-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.stage-row-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); width: 24px; }
+.stage-mini-bar { flex: 1; height: 10px; background: #F3F4F6; border-radius: 5px; overflow: hidden; }
+.stage-mini-fill { height: 100%; background: var(--primary); border-radius: 5px; }
+.stage-row-num { font-size: 13px; color: var(--text-secondary); width: 30px; text-align: right; }
+.chapter-progress-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+.chapter-progress-bar { height: 14px; background: #F3F4F6; border-radius: 7px; overflow: hidden; margin: 8px 0; }
+.chapter-progress-fill { height: 100%; background: linear-gradient(90deg, #4F46E5, #7C3AED); border-radius: 7px; }
+.chapter-progress-text { font-size: 13px; color: var(--text-secondary); }
+.about-rows { background: var(--card); border-radius: var(--radius); padding: 8px 16px; box-shadow: var(--shadow); }
+.about-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
+.about-row:last-child { border-bottom: none; }
+.about-label { color: var(--text-secondary); }
+.about-value { font-weight: 500; text-align: right; max-width: 60%; }
+.checkin-section { padding: 0 16px 24px; }
+.checkin-btn { width: 100%; padding: 16px; border-radius: 16px; font-size: 17px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
+.checkin-btn.active { background: linear-gradient(135deg, #4F46E5, #7C3AED); color: #fff; }
+.checkin-btn.done { background: #D1FAE5; color: #065F46; }
+
+/* ========== Modal ========== */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 200;
+  align-items: flex-end; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-sheet {
+  background: var(--card); border-radius: 20px 20px 0 0;
+  padding: 24px 20px; width: 100%; max-width: 500px;
+  padding-bottom: calc(24px + var(--safe-bottom));
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-title { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+.modal-text { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 20px; line-height: 1.6; }
+.modal-actions { display: flex; gap: 10px; }
+.modal-actions .btn { flex: 1; }
+
+/* ========== Toast ========== */
+.toast {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: #fff; padding: 12px 24px;
+  border-radius: 24px; font-size: 14px; font-weight: 500;
+  z-index: 300; opacity: 0; transition: opacity 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* ========== Empty State ========== */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 60px 32px; color: var(--text-muted); text-align: center;
+}
+.empty-icon { font-size: 64px; margin-bottom: 12px; }
+.empty-text { font-size: 16px; }
+.empty-sub { font-size: 13px; margin-top: 4px; margin-bottom: 16px; }
+
+/* ========== Responsive ========== */
+@media (min-width: 768px) {
+  body { max-width: 500px; margin: 0 auto; }
+  .bottom-nav { max-width: 500px; left: 50%; transform: translateX(-50%); }
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== PAGE 1: KNOWLEDGE LIST ==================== -->
+<div class="page active" id="page-knowledge">
+  <div class="stats-bar">
+    <div class="stat-item"><span class="stat-num" id="stat-total">16</span><span class="stat-label">知识点</span></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><span class="stat-num" id="stat-learned">0</span><span class="stat-label">已学习</span></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><span class="stat-num" id="stat-review">0</span><span class="stat-label">今日待复习</span></div>
+  </div>
+
+  <div class="chapter-header">
+    <div class="chapter-title-row">
+      <div class="chapter-badge ch-1">Ch.1</div>
+      <div><span class="chapter-title">Introduction</span><span class="chapter-subtitle">导论 · 16个知识点</span></div>
+    </div>
+    <span style="font-size:13px;color:var(--text-secondary)" id="progress-text">0% 已学</span>
+  </div>
+
+  <div style="padding:0 16px 8px"><div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div></div>
+
+  <div class="filter-row">
+    <div class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">全部</div>
+    <div class="filter-btn" data-filter="unlearned" onclick="setFilter('unlearned',this)">未学习</div>
+    <div class="filter-btn" data-filter="learning" onclick="setFilter('learning',this)">学习中</div>
+    <div class="filter-btn" data-filter="completed" onclick="setFilter('completed',this)">已掌握</div>
+    <div class="filter-btn" data-filter="review" onclick="setFilter('review',this)">待复习</div>
+  </div>
+
+  <div id="kp-list"></div>
+  <div class="empty-state" id="kp-empty" style="display:none">
+    <div class="empty-icon">📖</div><div class="empty-text">没有匹配的知识点</div>
+  </div>
+</div>
+
+<!-- ==================== PAGE 2: DETAIL ==================== -->
+<div class="page" id="page-detail">
+  <div id="detail-content"></div>
+</div>
+
+<!-- ==================== PAGE 3: REVIEW ==================== -->
+<div class="page" id="page-review">
+  <div class="review-header">
+    <span class="review-date" id="review-date"></span>
+    <span class="review-date-label">今日复习任务</span>
+    <div class="review-stats-row">
+      <div><span class="review-stat-num" id="review-total">0</span><span class="review-stat-label">待复习</span></div>
+      <div><span class="review-stat-num" id="review-done">0</span><span class="review-stat-label">已完成</span></div>
+    </div>
+  </div>
+
+  <div class="curve-card">
+    <div class="curve-title">🧠 艾宾浩斯遗忘曲线复习</div>
+    <div class="curve-stages">
+      <div class="curve-line"></div>
+      <div class="stage-dot-wrap"><div class="stage-dot" id="s-dot-0">1</div><span class="stage-label" id="s-label-0">S1</span></div>
+      <div class="stage-dot-wrap"><div class="stage-dot" id="s-dot-1">2</div><span class="stage-label" id="s-label-1">S2</span></div>
+      <div class="stage-dot-wrap"><div class="stage-dot" id="s-dot-2">4</div><span class="stage-label" id="s-label-2">S3</span></div>
+      <div class="stage-dot-wrap"><div class="stage-dot" id="s-dot-3">7</div><span class="stage-label" id="s-label-3">S4</span></div>
+      <div class="stage-dot-wrap"><div class="stage-dot" id="s-dot-4">15</div><span class="stage-label" id="s-label-4">S5</span></div>
+      <div class="stage-dot-wrap"><div class="stage-dot" id="s-dot-5">30</div><span class="stage-label" id="s-label-5">S6</span></div>
+    </div>
+    <div class="curve-desc">复习间隔: 第1天 → 第2天 → 第4天 → 第7天 → 第15天 → 第30天</div>
+  </div>
+
+  <div id="review-list"></div>
+  <div class="empty-state" id="review-empty" style="display:none">
+    <div class="empty-icon">🎉</div><div class="empty-text">今天复习任务已完成！</div>
+    <div class="empty-sub">去学习新知识点吧~</div>
+    <button class="btn btn-primary btn-sm" onclick="switchTab('knowledge')">浏览知识点</button>
+  </div>
+</div>
+
+<!-- ==================== PAGE 4: PROFILE ==================== -->
+<div class="page" id="page-profile">
+  <div class="profile-header">
+    <div class="profile-avatar">📚</div>
+    <div class="profile-name">语言学背诵助手</div>
+    <div class="profile-sub">学科英语 · 考研备考</div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stats-card streak"><span class="num" id="p-streak">0</span><span class="lbl">🔥 连续打卡</span></div>
+    <div class="stats-card"><span class="num" id="p-learned">0</span><span class="lbl">已学知识点</span></div>
+    <div class="stats-card"><span class="num" id="p-reviewed">0</span><span class="lbl">累计复习</span></div>
+    <div class="stats-card"><span class="num" id="p-rate">0%</span><span class="lbl">掌握率</span></div>
+  </div>
+
+  <div class="section">
+    <h3>📊 艾宾浩斯学习进度</h3>
+    <div class="card" id="stage-bars"></div>
+    <div style="padding:8px 0;font-size:11px;color:var(--text-muted);text-align:center">
+      S1(1天) → S2(2天) → S3(4天) → S4(7天) → S5(15天) → S6(30天)
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>📖 Chapter 1 完成度</h3>
+    <div class="chapter-progress-card">
+      <span id="cp-label" style="font-size:14px">0/16 已学</span>
+      <div class="chapter-progress-bar"><div class="chapter-progress-fill" id="cp-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>ℹ️ 关于</h3>
+    <div class="about-rows">
+      <div class="about-row"><span class="about-label">教材</span><span class="about-value">新编简明英语语言学教程（第2版）</span></div>
+      <div class="about-row"><span class="about-label">作者</span><span class="about-value">戴炜栋、何兆熊</span></div>
+      <div class="about-row"><span class="about-label">当前进度</span><span class="about-value">Chapter 1: Introduction</span></div>
+      <div class="about-row"><span class="about-label">复习方法</span><span class="about-value">艾宾浩斯遗忘曲线（6阶段）</span></div>
+    </div>
+  </div>
+
+  <div class="checkin-section">
+    <button class="checkin-btn active" id="checkin-btn" onclick="doCheckin()">📅 今日打卡</button>
+  </div>
+</div>
+
+<!-- ==================== BOTTOM NAV ==================== -->
+<div class="bottom-nav">
+  <div class="nav-item active" data-tab="knowledge" onclick="switchTab('knowledge')">
+    <span class="icon">📖</span><span class="label">知识点</span>
+    <span class="nav-badge" id="review-badge" style="display:none">0</span>
+  </div>
+  <div class="nav-item" data-tab="review" onclick="switchTab('review')">
+    <span class="icon">🧠</span><span class="label">今日复习</span>
+  </div>
+  <div class="nav-item" data-tab="profile" onclick="switchTab('profile')">
+    <span class="icon">👤</span><span class="label">我的</span>
+  </div>
+</div>
+
+<!-- ==================== MODAL ==================== -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-sheet">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-text" id="modal-text"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- ==================== TOAST ==================== -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ======================== DATA ========================
+const KNOWLEDGE_POINTS = [
+  { id:'1.1.1', chapter:'1', section:'1.1 What is Linguistics?', title:'Definition of Linguistics', titleCN:'语言学的定义',
+    content:`Linguistics is generally defined as the scientific study of language.
+
+Key questions linguistics seeks to answer:
+• "What is language?"
+• "How does language work?"
+• "What rules govern the structure of language?"
+
+Linguistics studies languages in general, not any particular language (e.g., English, Chinese, Arabic, Latin).
+
+Why is it "scientific"?
+→ Based on systematic investigation of linguistic data
+→ Process: observe & collect language facts → discover similarities → make generalizations → formulate hypotheses → check against observed facts repeatedly
+
+Data and theory stand in a dialectical complementation: theory without data is invalid; data without theory is meaningless.`,
+    terms:['linguistics','scientific study','language','dialectical complementation'],
+    tip:'Remember the scientific process: observation → generalization → hypothesis → verification. This is a common exam question.' },
+  { id:'1.1.2a', chapter:'1', section:'1.1 What is Linguistics?', title:'The Scope of Linguistics — Core Branches', titleCN:'语言学范围 — 核心分支',
+    content:`General linguistics deals with basic concepts, theories, descriptions, models and methods applicable in any linguistic study.
+
+Six core branches (the "core of linguistics"):
+1. Phonetics — the study of speech sounds used in linguistic communication
+2. Phonology — how sounds are put together and used to convey meaning
+3. Morphology — the way symbols (morphemes) are arranged and combined to form words
+4. Syntax — rules governing the combination of words into grammatically permissible sentences
+5. Semantics — the study of meaning
+6. Pragmatics — the study of meaning in the context of language use`,
+    terms:['general linguistics','phonetics','phonology','morphology','syntax','semantics','pragmatics'],
+    tip:'These 6 branches form a hierarchy from smallest unit (sound) to largest (discourse in context). Know their order.' },
+  { id:'1.1.2b', chapter:'1', section:'1.1 What is Linguistics?', title:'Interdisciplinary Branches of Linguistics', titleCN:'语言学的跨学科分支',
+    content:`Language is not an isolated phenomenon — it is a social activity carried out by humans.
+
+Interdisciplinary branches:
+1. Sociolinguistics — studies social aspects of language and its relation with society
+2. Psycholinguistics — relates language to psychology (how mind works, acquisition, memory)
+3. Applied Linguistics — applies linguistic findings to practical problems
+   • Broad sense: recovery of speech ability, etc.
+   • Narrow sense: application of linguistic theories to language teaching`,
+    terms:['sociolinguistics','psycholinguistics','applied linguistics'],
+    tip:'Sociolinguistics = language + society; Psycholinguistics = language + psychology; Applied linguistics = language + teaching (narrow sense)' },
+  { id:'1.1.3a', chapter:'1', section:'1.1.3 Important Distinctions', title:'Prescriptive vs. Descriptive', titleCN:'规定性 vs. 描写性',
+    content:`Prescriptive study:
+• Aims to lay down rules for "correct and standard" language behavior
+• Tells people what they SHOULD say and what they should NOT say
+• Example: traditional grammar books
+
+Descriptive study:
+• Aims to describe and analyze the language people ACTUALLY use
+• The linguist is an observer and recorder of facts, not a judge
+
+Modern linguistics is mostly descriptive. It is scientific and objective — it describes whatever occurs in actual language use, whether "correct" or not.`,
+    terms:['prescriptive','descriptive','modern linguistics','traditional grammar'],
+    tip:'Modern linguistics = descriptive (describe what IS). Traditional grammar = prescriptive (prescribe what SHOULD BE).' },
+  { id:'1.1.3b', chapter:'1', section:'1.1.3 Important Distinctions', title:'Synchronic vs. Diachronic', titleCN:'共时性 vs. 历时性',
+    content:`Synchronic study:
+• Description of a language at some point of time in history
+• Like taking a "snapshot" of language at a given moment
+• Most modern linguistic studies are synchronic
+
+Diachronic study:
+• Description of a language as it changes through time
+• A historical study of language development over a period
+• Like a "movie" showing language evolution
+
+In modern linguistics, synchronic approach enjoys priority over diachronic.`,
+    terms:['synchronic','diachronic','historical linguistics'],
+    tip:'Synchronic = at one point in time. Diachronic = through time. Saussure emphasized synchronic study.' },
+  { id:'1.1.3c', chapter:'1', section:'1.1.3 Important Distinctions', title:'Speech vs. Writing', titleCN:'口语 vs. 书面语',
+    content:`Modern linguistics regards the spoken language as the natural/primary medium of human language.
+
+Reasons:
+1. Linguistic evolution: speech is prior to writing (writing systems were "invented" to record speech)
+2. Everyday communication: speech plays a greater role in terms of amount of information conveyed
+3. Acquisition: every native speaker acquires speech first; writing is learned later
+4. Authenticity: spoken language reveals more true features; written language is only the "revised" record
+
+→ Linguists draw their data mostly from everyday speech.`,
+    terms:['speech','writing','primary medium','spoken language'],
+    tip:'Speech is PRIMARY, writing is SECONDARY. Four reasons: evolution, quantity, acquisition, authenticity.' },
+  { id:'1.1.3d', chapter:'1', section:'1.1.3 Important Distinctions', title:'Langue vs. Parole (Saussure)', titleCN:'语言 vs. 言语（索绪尔）',
+    content:`Proposed by Swiss linguist F. de Saussure in the early 20th century.
+
+Langue (语言):
+• The abstract linguistic system shared by all members of a speech community
+• The set of conventions and rules that language users must abide by
+• Abstract, relatively stable — does not change frequently
+
+Parole (言语):
+• The realization of langue in actual use — concrete, varies from person to person
+
+Saussure's purpose: Parole is too varied for systematic investigation. Linguists should abstract langue from parole — discover the regularities governing actual use.
+
+Saussure took a SOCIOLOGICAL view of language.`,
+    terms:['langue','parole','Saussure','abstract system','concrete use'],
+    tip:'Langue = abstract, social, stable (the system). Parole = concrete, individual, variable (the use). Saussure took a SOCIOLOGICAL view.' },
+  { id:'1.1.3e', chapter:'1', section:'1.1.3 Important Distinctions', title:'Competence vs. Performance (Chomsky)', titleCN:'语言能力 vs. 语言运用（乔姆斯基）',
+    content:`Proposed by American linguist N. Chomsky in the late 1950s.
+
+Competence (语言能力):
+• The ideal user's knowledge of the rules of his language
+• Enables production and understanding of infinitely many sentences
+
+Performance (语言运用):
+• The actual realization of competence in linguistic communication
+• Imperfect — affected by social and psychological factors (stress, anxiety)
+
+Task of linguists: discover the IDEAL speaker's competence, not haphazard performance.
+
+Differences from Saussure:
+• Saussure: SOCIOLOGICAL view → langue = social conventions
+• Chomsky: PSYCHOLOGICAL view → competence = property of individual mind`,
+    terms:['competence','performance','Chomsky','ideal speaker'],
+    tip:'Competence = knowledge (psychological). Performance = use (affected by external factors). Chomsky → PSYCHOLOGICAL; Saussure → SOCIOLOGICAL. This contrast is a classic exam question!' },
+  { id:'1.1.3f', chapter:'1', section:'1.1.3 Important Distinctions', title:'Traditional Grammar vs. Modern Linguistics', titleCN:'传统语法 vs. 现代语言学',
+    content:`Modern linguistics began with Saussure's "Course in General Linguistics" (early 20th century).
+
+Three key differences:
+1. Descriptive vs. Prescriptive — modern linguistics describes what IS said; traditional grammar prescribes what OUGHT to be said
+2. Spoken language as primary — modern linguistics prioritizes speech; traditional grammar over-emphasized written word
+3. No Latin-based framework — modern linguistics opposes judging one language by standards of another; traditional grammar forced languages into Latin patterns`,
+    terms:['traditional grammar','modern linguistics','Latin-based framework'],
+    tip:'Three differences: (1) descriptive vs. prescriptive, (2) speech vs. writing priority, (3) no Latin framework vs. Latin framework.' },
+  { id:'1.2.1', chapter:'1', section:'1.2 What is Language?', title:'Definitions of Language', titleCN:'语言的定义',
+    content:`Famous definitions:
+• Sapir (1921): "Language is a purely human and non-instinctive method of communicating ideas, emotions and desires by means of voluntarily produced symbols."
+• Hall (1968): "Language is the institution whereby humans communicate and interact with each other by means of habitually used oral-auditory arbitrary symbols."
+• Chomsky (1957): "Language is a set (finite or infinite) of sentences, each finite in length and constructed out of a finite set of elements."
+
+Generally accepted definition:
+"Language is a system of arbitrary vocal symbols used for human communication."
+
+Five key features: SYSTEM, ARBITRARY, VOCAL, SYMBOLS, HUMAN-SPECIFIC`,
+    terms:['language definition','system','arbitrary','vocal','symbols','human-specific'],
+    tip:'The 5 key features: system, arbitrary, vocal, symbols, human-specific. Be able to explain each with examples.' },
+  { id:'1.2.2a', chapter:'1', section:'1.2.2 Design Features', title:'Design Features — Arbitrariness & Productivity', titleCN:'结构特征 — 任意性与创造性',
+    content:`Design features = defining properties of human language that distinguish it from animal communication (Hockett, 1960).
+
+1) ARBITRARINESS
+• No logical connection between meanings and sounds
+• Exceptions: onomatopoeic words (rumble, crash, bang) and some compounds (photocopy)
+• Makes possible an unlimited source of expressions
+
+2) PRODUCTIVITY (Creativity)
+• Users can produce and understand infinitely many sentences, including those never heard before
+• Unique to human language
+• Animal systems are restricted: gibbon calls limited, bee dancing only indicates food source`,
+    terms:['arbitrariness','productivity','creativity','Hockett','onomatopoeia'],
+    tip:'Arbitrariness ≠ 100% arbitrary — onomatopoeic words are exceptions. Productivity = infinite sentences from finite rules (unique to humans).' },
+  { id:'1.2.2b', chapter:'1', section:'1.2.2 Design Features', title:'Design Features — Duality & Displacement', titleCN:'结构特征 — 二重性与移位性',
+    content:`3) DUALITY (Double Articulation)
+• Language has TWO levels of structure:
+  Lower Level: structure of SOUNDS (meaningless by themselves)
+  Higher Level: units of MEANING (morphemes, words)
+• e.g., /k/+/a:/+/p/ → "carp" or "park"
+• No animal communication system has duality
+
+4) DISPLACEMENT
+• Language can refer to things not present — past, future, far-away places, imaginary
+• Animal calls are mainly in response to IMMEDIATE changes (food, danger, pain)
+• Once danger/pain is gone, animal calls stop`,
+    terms:['duality','double articulation','displacement','two levels'],
+    tip:'Duality = meaningless sounds → meaningful words → infinite sentences. Displacement = talking about things not present. Both unique to human language.' },
+  { id:'1.2.2c', chapter:'1', section:'1.2.2 Design Features', title:'Design Features — Cultural Transmission', titleCN:'结构特征 — 文化传递性',
+    content:`5) CULTURAL TRANSMISSION
+• Human capacity for language has a genetic basis (born with ability to acquire language)
+• BUT: details of any language system are NOT genetically transmitted
+• Language is passed on through TEACHING and LEARNING, not by instinct
+• Evidence: English and Chinese speakers both use language but are NOT mutually intelligible
+
+Contrast with animals:
+• Animal call systems are GENETICALLY transmitted
+• Animals are BORN with the capacity to produce calls peculiar to their species`,
+    terms:['cultural transmission','genetic basis','teaching and learning','instinct'],
+    tip:'Humans: genetic capacity + cultural learning. Animals: genetic transmission only. All 5 features together distinguish human language from animal communication.' },
+  { id:'1.2.3a', chapter:'1', section:'1.2.3 Functions of Language', title:'Three Main Functions of Language', titleCN:'语言的三大功能',
+    content:`Three main functions (distinct but overlapping):
+
+1. DESCRIPTIVE FUNCTION (cognitive/referential/propositional)
+• The PRIMARY function — conveys factual information
+• e.g., "The Sichuan earthquake is the most serious one China has ever suffered."
+
+2. EXPRESSIVE FUNCTION (emotive/attitudinal)
+• Supplies information about the user's feelings, preferences, prejudices, values
+• e.g., "I will never go camping with the Simpsons again."
+
+3. SOCIAL FUNCTION (interpersonal)
+• Serves to establish and maintain social relations between people
+• e.g., "How can I help you, Sir?"`,
+    terms:['descriptive function','expressive function','social function','interpersonal'],
+    tip:'Descriptive = facts (primary). Expressive = feelings. Social = relationships. They overlap in real communication.' },
+  { id:'1.2.3b', chapter:'1', section:'1.2.3 Functions of Language', title:"Jakobson's Model of Language Functions", titleCN:'雅各布森的语言功能模型',
+    content:`Roman Jakobson identified SIX elements of a speech event, each with a specific function:
+
+1. Addresser → EMOTIVE (expresses attitude)
+2. Addressee → CONATIVE (influences action/thinking)
+3. Context → REFERENTIAL (conveys information)
+4. Message → POETIC (displays beauty of language)
+5. Contact → PHATIC COMMUNION (maintains relationships)
+6. Code → METALINGUISTIC (language about language)
+
+Phatic communion = small talk! "Hi! How are you this morning?"`,
+    terms:['Jakobson','emotive','conative','referential','poetic','phatic communion','metalinguistic'],
+    tip:'6 pairs: Addresser-Emotive, Addressee-Conative, Context-Referential, Message-Poetic, Contact-Phatic, Code-Metalinguistic. Phatic communion = small talk!' },
+  { id:'1.2.3c', chapter:'1', section:'1.2.3 Functions of Language', title:"Halliday's Macrofunctions", titleCN:'韩礼德的宏观功能',
+    content:`British linguist M.A.K. Halliday — 3 MACROFUNCTIONS:
+
+1. IDEATIONAL FUNCTION
+• Organizes speaker's experience of the real or imaginary world
+• Broader than descriptive — also includes attitude, evaluation, feelings
+
+2. INTERPERSONAL FUNCTION
+• Indicates, establishes, or maintains social relationships
+• Expresses speaker's role and assessment of social relationship
+
+3. TEXTUAL FUNCTION
+• Organizes written/spoken texts to be coherent
+• Ensures texts fit the particular situation
+
+Halliday's model based on child→adult language development.`,
+    terms:['Halliday','ideational','interpersonal','textual','macrofunctions'],
+    tip:"Halliday's 3: Ideational (content), Interpersonal (social relations), Textual (coherence). Ideational ≠ just descriptive — it's broader." }
+];
+
+// ======================== STATE ========================
+const REVIEW_INTERVALS = [1, 2, 4, 7, 15, 30];
+let currentTab = 'knowledge';
+let currentFilter = 'all';
+let currentDetailId = null;
+let currentModalCallback = null;
+
+// ======================== STORAGE HELPERS ========================
+function getStore(key, defaultValue) {
+  try { const v = localStorage.getItem('ling_'+key); return v ? JSON.parse(v) : defaultValue; }
+  catch(e) { return defaultValue; }
+}
+function setStore(key, value) {
+  try { localStorage.setItem('ling_'+key, JSON.stringify(value)); } catch(e) {}
+}
+function getDateStr(offset=0) {
+  const d = new Date(); d.setDate(d.getDate()+offset);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ======================== KNOWLEDGE STATUS ========================
+function getKpStatus(id) {
+  const all = getStore('kp_status', {});
+  return all[id] || { stage:0, nextReview:'', learnedDate:'', history:[] };
+}
+function setKpStatus(id, status) {
+  const all = getStore('kp_status', {});
+  all[id] = status;
+  setStore('kp_status', all);
+}
+
+function markAsLearned(id) {
+  const today = getDateStr();
+  const s = getKpStatus(id);
+  s.stage = 1;
+  s.learnedDate = today;
+  s.nextReview = getDateStr(REVIEW_INTERVALS[0]);
+  s.history = s.history || [];
+  s.history.push({ date: today, action: 'learned' });
+  setKpStatus(id, s);
+  updateStats();
+}
+
+function completeReview(id, mastered) {
+  const s = getKpStatus(id);
+  if (!s || s.stage === 0) return;
+  const today = getDateStr();
+  if (mastered && s.stage < REVIEW_INTERVALS.length) {
+    s.stage += 1;
+    s.nextReview = getDateStr(REVIEW_INTERVALS[s.stage - 1]);
+  } else if (!mastered) {
+    s.stage = 1;
+    s.nextReview = getDateStr(REVIEW_INTERVALS[0]);
+  } else {
+    s.stage = 'completed';
+    s.nextReview = '';
+  }
+  s.history.push({ date: today, action: mastered ? 'passed' : 'retry' });
+  setKpStatus(id, s);
+
+  const stats = getStore('stats', { totalReviewed:0 });
+  stats.totalReviewed = (stats.totalReviewed || 0) + 1;
+  setStore('stats', stats);
+
+  updateStats();
+  return s;
+}
+
+function getTodayReviews() {
+  const today = getDateStr();
+  const all = getStore('kp_status', {});
+  const list = [];
+  Object.keys(all).forEach(id => {
+    const s = all[id];
+    if (s.nextReview && s.nextReview <= today && s.stage !== 'completed') {
+      list.push({ id, stage: s.stage, learnedDate: s.learnedDate, history: s.history || [] });
+    }
+  });
+  return list;
+}
+
+function updateStats() {
+  const all = getStore('kp_status', {});
+  let learned = 0, completed = 0, stageCounts = [0,0,0,0,0,0];
+  Object.values(all).forEach(s => {
+    if (s.stage > 0 && s.stage !== 'completed') { learned++; stageCounts[s.stage-1]++; }
+    else if (s.stage === 'completed') { learned++; completed++; stageCounts[5]++; }
+  });
+  const stats = getStore('stats', { streak:0, lastCheckinDate:'', totalReviewed:0 });
+  stats.totalLearned = learned;
+  setStore('stats', stats);
+
+  const todayReviews = getTodayReviews();
+  const reviewCount = todayReviews.length;
+
+  document.getElementById('stat-total').textContent = KNOWLEDGE_POINTS.length;
+  document.getElementById('stat-learned').textContent = learned;
+  document.getElementById('stat-review').textContent = reviewCount;
+  const pct = KNOWLEDGE_POINTS.length > 0 ? Math.round(learned/KNOWLEDGE_POINTS.length*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = pct + '% 已学';
+
+  // Badge
+  const badge = document.getElementById('review-badge');
+  if (reviewCount > 0) { badge.style.display = 'flex'; badge.textContent = reviewCount; }
+  else { badge.style.display = 'none'; }
+
+  return { learned, completed, stageCounts, reviewCount, stats };
+}
+
+// ======================== CHECKIN ========================
+function doCheckin() {
+  const today = getDateStr();
+  const dates = getStore('checkin_dates', []);
+  if (dates.includes(today)) { showToast('今天已打卡~'); return; }
+  dates.push(today);
+  setStore('checkin_dates', dates);
+
+  const stats = getStore('stats', { streak:0, lastCheckinDate:'' });
+  const yesterday = getDateStr(-1);
+  if (stats.lastCheckinDate === yesterday) { stats.streak = (stats.streak||0) + 1; }
+  else { stats.streak = 1; }
+  stats.lastCheckinDate = today;
+  setStore('stats', stats);
+
+  showToast('打卡成功！🔥');
+  renderProfile();
+}
+
+// ======================== RENDER: KNOWLEDGE LIST ========================
+function renderKnowledgeList() {
+  const all = getStore('kp_status', {});
+  const todayReviews = getTodayReviews();
+  const todayIds = new Set(todayReviews.map(r => r.id));
+  const data = updateStats();
+
+  let points = KNOWLEDGE_POINTS.map(kp => {
+    const s = all[kp.id];
+    let status = 'unlearned', stage = 0;
+    if (s && s.stage === 'completed') { status = 'completed'; }
+    else if (s && s.stage > 0) { status = 'learning'; stage = s.stage; }
+    return { ...kp, status, stage, isTodayReview: todayIds.has(kp.id) };
+  });
+
+  // Filter
+  if (currentFilter === 'unlearned') points = points.filter(p => p.status === 'unlearned');
+  else if (currentFilter === 'learning') points = points.filter(p => p.status === 'learning');
+  else if (currentFilter === 'completed') points = points.filter(p => p.status === 'completed');
+  else if (currentFilter === 'review') points = points.filter(p => p.isTodayReview);
+
+  const container = document.getElementById('kp-list');
+  const empty = document.getElementById('kp-empty');
+
+  if (points.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+
+  container.innerHTML = points.map(p => {
+    const dotClass = p.status === 'unlearned' ? 'gray' : p.status === 'learning' ? 'orange' : 'green';
+    let statusText = '未学习';
+    if (p.status === 'learning') statusText = `学习中 S${p.stage}/6`;
+    else if (p.status === 'completed') statusText = '已掌握 ✓';
+    const termTags = (p.terms||[]).slice(0,3).map(t => `<span class="tag tag-primary">${t}</span>`).join('');
+
+    return `
+    <div class="kp-card" onclick="openDetail('${p.id}')">
+      <div class="kp-left">
+        <div class="kp-id">${p.id}</div>
+        <div class="kp-dot ${dotClass}"></div>
+      </div>
+      <div class="kp-right">
+        <div class="kp-section">${p.section}</div>
+        <div class="kp-title">${p.title}</div>
+        <div class="kp-title-cn">${p.titleCN}</div>
+        <div class="kp-term-row">${termTags}</div>
+        <div class="kp-status-text">${statusText}${p.isTodayReview ? ' · 📌今日待复习' : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderKnowledgeList();
+}
+
+// ======================== RENDER: DETAIL ========================
+function openDetail(id) {
+  currentDetailId = id;
+  const kp = KNOWLEDGE_POINTS.find(p => p.id === id);
+  if (!kp) return;
+
+  const s = getKpStatus(id);
+  let status = 'unlearned', stage = 0, history = [];
+  if (s && s.stage === 'completed') { status = 'completed'; stage = 6; }
+  else if (s && s.stage > 0) { status = 'learning'; stage = s.stage; }
+  history = (s && s.history) ? s.history : [];
+
+  let statusTag = '';
+  if (status === 'unlearned') statusTag = '<span class="tag tag-primary">未学习</span>';
+  else if (status === 'learning') statusTag = `<span class="tag tag-warning">学习中 S${stage}/6</span>`;
+  else statusTag = '<span class="tag tag-success">已掌握 ✓</span>';
+
+  const termTags = (kp.terms||[]).map(t => `<span class="term-item tag tag-primary">${t}</span>`).join(' ');
+
+  let historyHTML = '';
+  if (history.length > 0) {
+    historyHTML = `<div class="content-card"><h3>📋 学习记录</h3><div class="history-list">` +
+      history.map(h => {
+        const dotClass = h.action === 'learned' ? 'blue' : h.action === 'passed' ? 'green' : 'orange';
+        const actionText = h.action === 'learned' ? '首次学习' : h.action === 'passed' ? '复习通过' : '重新学习';
+        return `<div class="history-item"><div class="history-dot ${dotClass}"></div><span>${h.date} ${actionText}</span></div>`;
+      }).join('') + `</div></div>`;
+  }
+
+  let bottomHTML = '';
+  if (status === 'unlearned') {
+    bottomHTML = `<div class="bottom-actions"><button class="btn btn-primary btn-lg" onclick="doStartLearn('${id}')">📖 开始学习</button></div>`;
+  } else if (status === 'learning') {
+    bottomHTML = `<div class="bottom-actions">
+      <button class="btn btn-success" onclick="doMarkMastered('${id}')">✅ 掌握 (晋级)</button>
+      <button class="btn btn-warning" onclick="doMarkRetry('${id}')">🔄 重新学习</button>
+    </div>`;
+  } else {
+    bottomHTML = `<div class="bottom-actions">
+      <button class="btn btn-outline" onclick="doMarkRetry('${id}')">🔄 重新学习</button>
+      <button class="btn btn-ghost" disabled>🏆 已完全掌握</button>
+    </div>`;
+  }
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-header-top">
+        <div class="chapter-tag ch-1">Ch.${kp.chapter}</div>
+        ${statusTag}
+      </div>
+      <span class="detail-section">${kp.section}</span>
+      <span class="detail-title">${kp.title}</span>
+      <span class="detail-title-cn">${kp.titleCN}</span>
+    </div>
+    <div class="content-card">
+      <h3>📝 核心内容</h3>
+      <div class="content-body">${kp.content}</div>
+      <div class="terms-row" style="margin-top:12px"><span style="font-weight:600;font-size:14px">🔑 Key Terms: </span>${termTags}</div>
+    </div>
+    <div class="tip-card">
+      <h3>💡 考试提示</h3>
+      <p>${kp.tip}</p>
+    </div>
+    ${historyHTML}
+    ${bottomHTML}
+  `;
+
+  switchTab('detail', false);
+}
+
+function doStartLearn(id) {
+  showModal('确认学习', '将此知识点加入艾宾浩斯记忆计划？<br><br>第1次复习将在<strong>明天</strong>进行。', [
+    { text:'取消', cls:'btn-outline', action:() => hideModal() },
+    { text:'确认学习', cls:'btn-primary', action:() => {
+      markAsLearned(id);
+      hideModal();
+      showToast('已加入学习计划 ✓');
+      openDetail(id);
+      renderKnowledgeList();
+      renderReviewList();
+      renderProfile();
+    }}
+  ]);
+}
+
+function doMarkMastered(id) {
+  const s = getKpStatus(id);
+  showModal('确认晋级', `当前阶段: <strong>S${s.stage}/6</strong><br>确认已掌握，进入下一阶段？`, [
+    { text:'取消', cls:'btn-outline', action:() => hideModal() },
+    { text:'确认晋级', cls:'btn-success', action:() => {
+      const ns = completeReview(id, true);
+      hideModal();
+      if (ns && ns.stage === 'completed') showToast('🎉 完全掌握！');
+      else showToast(`晋级 S${ns?ns.stage:s.stage+1}/6 ✓`);
+      openDetail(id);
+      renderKnowledgeList();
+      renderReviewList();
+      renderProfile();
+    }}
+  ]);
+}
+
+function doMarkRetry(id) {
+  showModal('重新学习', '确认重新开始学习此知识点？<br><br>将从<strong>第1阶段</strong>重新开始。', [
+    { text:'取消', cls:'btn-outline', action:() => hideModal() },
+    { text:'重新学习', cls:'btn-warning', action:() => {
+      completeReview(id, false);
+      hideModal();
+      showToast('已重置为 S1');
+      openDetail(id);
+      renderKnowledgeList();
+      renderReviewList();
+      renderProfile();
+    }}
+  ]);
+}
+
+// ======================== RENDER: REVIEW ========================
+function renderReviewList() {
+  const todayReviews = getTodayReviews();
+  const today = getDateStr();
+  const all = getStore('kp_status', {});
+
+  // Calculate done count
+  let doneCount = 0;
+  const reviewData = todayReviews.map(r => {
+    const kp = KNOWLEDGE_POINTS.find(p => p.id === r.id);
+    if (!kp) return null;
+    const lastH = r.history[r.history.length-1];
+    if (lastH && lastH.date === today && (lastH.action === 'passed' || lastH.action === 'retry')) doneCount++;
+    return { ...r, ...kp, doneToday: !!(lastH && lastH.date === today) };
+  }).filter(Boolean);
+
+  document.getElementById('review-total').textContent = reviewData.length;
+  document.getElementById('review-done').textContent = doneCount;
+
+  // Update stage dots
+  const activeStages = new Set(reviewData.map(r => r.stage));
+  const doneStages = new Set(reviewData.filter(r => r.doneToday).map(r => r.stage));
+  for (let i = 0; i < 6; i++) {
+    const dot = document.getElementById('s-dot-' + i);
+    const label = document.getElementById('s-label-' + i);
+    dot.className = 'stage-dot'; label.className = 'stage-label';
+    if (doneStages.has(i+1)) { dot.classList.add('done'); label.classList.add('done'); }
+    else if (activeStages.has(i+1)) { dot.classList.add('active'); label.classList.add('active'); }
+  }
+
+  const container = document.getElementById('review-list');
+  const empty = document.getElementById('review-empty');
+
+  if (reviewData.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'flex';
+  } else {
+    empty.style.display = 'none';
+    container.innerHTML = reviewData.map(r => `
+      <div class="review-card">
+        <div class="review-s-badge s${r.stage}">S${r.stage}</div>
+        <div class="review-card-mid" onclick="openDetail('${r.id}')">
+          <span class="review-card-title">${r.title}</span>
+          <span class="review-card-cn">${r.titleCN}</span>
+          <div class="review-card-meta">首次学习: ${r.learnedDate} · 复习${r.history.length}次</div>
+        </div>
+        <div class="review-actions">
+          <button class="review-btn pass" onclick="reviewPass('${r.id}')" title="掌握">✓</button>
+          <button class="review-btn retry" onclick="reviewRetry('${r.id}')" title="重新学习">↺</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Update badge
+  const badge = document.getElementById('review-badge');
+  const remaining = reviewData.length - doneCount;
+  if (remaining > 0) { badge.style.display = 'flex'; badge.textContent = remaining; }
+  else { badge.style.display = 'none'; }
+}
+
+function reviewPass(id) {
+  showModal('确认完成', '确认已掌握此知识点？<br>将进入下一阶段复习。', [
+    { text:'取消', cls:'btn-outline', action:() => hideModal() },
+    { text:'确认', cls:'btn-success', action:() => {
+      completeReview(id, true);
+      hideModal();
+      showToast('复习完成 ✓');
+      renderReviewList();
+      renderKnowledgeList();
+      renderProfile();
+    }}
+  ]);
+}
+function reviewRetry(id) {
+  showModal('重新开始', '未掌握此知识点，重新从S1开始？', [
+    { text:'取消', cls:'btn-outline', action:() => hideModal() },
+    { text:'重新学习', cls:'btn-warning', action:() => {
+      completeReview(id, false);
+      hideModal();
+      showToast('已重置');
+      renderReviewList();
+      renderKnowledgeList();
+      renderProfile();
+    }}
+  ]);
+}
+
+// ======================== RENDER: PROFILE ========================
+function renderProfile() {
+  const stats = getStore('stats', { streak:0, totalLearned:0, totalReviewed:0, lastCheckinDate:'' });
+  const all = getStore('kp_status', {});
+  let learned = 0, completed = 0;
+  const stageCounts = [0,0,0,0,0,0];
+  Object.values(all).forEach(s => {
+    if (s.stage > 0 && s.stage !== 'completed') { learned++; stageCounts[s.stage-1]++; }
+    else if (s.stage === 'completed') { learned++; completed++; stageCounts[5]++; }
+  });
+
+  document.getElementById('p-streak').textContent = stats.streak || 0;
+  document.getElementById('p-learned').textContent = learned;
+  document.getElementById('p-reviewed').textContent = stats.totalReviewed || 0;
+  document.getElementById('p-rate').textContent = (learned > 0 ? Math.round(completed/learned*100) : 0) + '%';
+
+  // Chapter progress
+  const cp = KNOWLEDGE_POINTS.length > 0 ? Math.round(learned/KNOWLEDGE_POINTS.length*100) : 0;
+  document.getElementById('cp-fill').style.width = cp + '%';
+  document.getElementById('cp-label').textContent = `${learned}/${KNOWLEDGE_POINTS.length} 已学 (${cp}%)`;
+
+  // Stage bars
+  const maxCount = Math.max(...stageCounts, 1);
+  document.getElementById('stage-bars').innerHTML = stageCounts.map((c, i) => `
+    <div class="stage-row">
+      <span class="stage-row-label">S${i+1}</span>
+      <div class="stage-mini-bar"><div class="stage-mini-fill" style="width:${Math.round(c/maxCount*100)}%"></div></div>
+      <span class="stage-row-num">${c}</span>
+    </div>
+  `).join('');
+
+  // Checkin button
+  const today = getDateStr();
+  const checkinDates = getStore('checkin_dates', []);
+  const canCheckin = !checkinDates.includes(today);
+  const btn = document.getElementById('checkin-btn');
+  btn.textContent = canCheckin ? '📅 今日打卡' : '✅ 今日已打卡';
+  btn.className = 'checkin-btn ' + (canCheckin ? 'active' : 'done');
+}
+
+// ======================== UI HELPERS ========================
+function switchTab(tab, addHistory = true) {
+  currentTab = tab;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const pageMap = { knowledge:'page-knowledge', detail:'page-detail', review:'page-review', profile:'page-profile' };
+  const page = document.getElementById(pageMap[tab]);
+  if (page) page.classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.dataset.tab === tab) n.classList.add('active');
+    // Hide nav for detail page
+    if (tab === 'detail') n.style.display = 'none';
+  });
+
+  const nav = document.querySelector('.bottom-nav');
+  if (tab === 'detail') {
+    nav.style.display = 'none';
+    document.body.style.paddingBottom = '16px';
+  } else {
+    nav.style.display = 'flex';
+    document.querySelectorAll('.nav-item').forEach(n => n.style.display = '');
+    document.body.style.paddingBottom = 'calc(var(--nav-height) + var(--safe-bottom) + 16px)';
+  }
+
+  if (tab === 'knowledge') { renderKnowledgeList(); }
+  else if (tab === 'review') { renderReviewList(); }
+  else if (tab === 'profile') { renderProfile(); }
+}
+
+function showModal(title, text, buttons) {
+  document.getElementById('modal-title').innerHTML = title;
+  document.getElementById('modal-text').innerHTML = text;
+  document.getElementById('modal-actions').innerHTML = buttons.map(b =>
+    `<button class="btn ${b.cls}" onclick="(${b.action.toString()})()">${b.text}</button>`
+  ).join('');
+  document.getElementById('modal').classList.add('show');
+}
+function hideModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ======================== INIT ========================
+function init() {
+  const d = new Date();
+  const weekdays = ['日','一','二','三','四','五','六'];
+  document.getElementById('review-date').textContent =
+    `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${weekdays[d.getDay()]}`;
+
+  // Init storage
+  if (!getStore('kp_status', null)) setStore('kp_status', {});
+  if (!getStore('stats', null)) setStore('stats', { streak:0, lastCheckinDate:'', totalLearned:0, totalReviewed:0 });
+  if (!getStore('checkin_dates', null)) setStore('checkin_dates', []);
+
+  // Auto-checkin on visit
+  const today = getDateStr();
+  const stats = getStore('stats', {});
+  const yesterday = getDateStr(-1);
+  const checkinDates = getStore('checkin_dates', []);
+  if (!checkinDates.includes(today)) {
+    if (stats.lastCheckinDate === yesterday) { stats.streak = (stats.streak||0) + 1; }
+    else if (stats.lastCheckinDate !== today) { stats.streak = 1; }
+    stats.lastCheckinDate = today;
+    checkinDates.push(today);
+    setStore('checkin_dates', checkinDates);
+    setStore('stats', stats);
+  }
+
+  renderKnowledgeList();
+  renderReviewList();
+  renderProfile();
+
+  // Handle back button for detail page
+  window.addEventListener('popstate', (e) => {
+    if (currentTab === 'detail') {
+      switchTab(e.state?.tab || 'knowledge', false);
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+// ======================== SERVICE WORKER REGISTRATION ========================
+if ('serviceWorker' in navigator) {
+  // Minimal SW for PWA installability
+  // The browser will use the manifest for "Add to Home Screen"
+}
+</script>
+</body>
+</html>
